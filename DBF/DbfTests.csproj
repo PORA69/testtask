@@ -53,6 +53,7 @@
     <Compile Include="DbfReader.cs" />
     <Compile Include="OutputRow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RangeHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\ELEKTRO\E01\E600DI01\128.DBF">
