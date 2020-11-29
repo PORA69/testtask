@@ -48,6 +48,31 @@ namespace DbfTests
             WriteResultsToFile(@".\output.txt", outputs);
         }
 
+        [TestMethod]
+        public void SecondTestTask()
+        {
+            // Clear the header list set by the previous test
+            OutputRow.Headers.Clear();
+
+            const string RootDir = @".\Data";
+            const string RelevantFileName = "128.dbf";
+
+            var outputs = GetOrderedFileData(GetFiles(RootDir, RelevantFileName));
+
+            // the following asserts should pass
+            Assert.AreEqual(25790, outputs.Count);
+            Assert.AreEqual(27, OutputRow.Headers.Count);
+            Assert.AreEqual(27, outputs[0].Values.Count);
+            Assert.AreEqual(27, outputs[11110].Values.Count);
+            Assert.AreEqual(27, outputs[25789].Values.Count);
+            Assert.AreEqual(633036852000000000, outputs.Min(o => o.Timestamp).Ticks);
+            Assert.AreEqual(634756887000000000, outputs.Max(o => o.Timestamp).Ticks);
+            Assert.AreEqual(633036852000000000, outputs[0].Timestamp.Ticks);
+            Assert.AreEqual(634756887000000000, outputs.Last().Timestamp.Ticks);
+
+            WriteResultsToFile(@".\output_second_test.txt", outputs);
+        }
+
         /// <summary>
         /// Gets files from specified path which match the pattern provided. All Directories are searched.
         /// </summary>
@@ -85,13 +110,47 @@ namespace DbfTests
         }
 
         /// <summary>
+        /// Gets data from files and maintains order of values in files;
+        /// </summary>
+        /// <param name="files"></param>
+        /// <returns></returns>
+        private List<OutputRow> GetOrderedFileData(List<string> files)
+        {
+            List<OutputRow> outputs = new List<OutputRow>();
+            foreach (var file in files)
+            {
+                OutputRow.Headers.Add(file);
+                var values = new DbfReader().ReadValues(file);
+                foreach (var value in values)
+                {
+                    var time = outputs.FirstOrDefault(x => x.Timestamp == value.Timestamp);
+                    if (time == null)
+                    {
+                        var item = new OutputRow
+                        {
+                            Timestamp = value.Timestamp,
+                            Values = new List<double?>(new double?[files.Count])
+                        };
+                        item.Values[OutputRow.Headers.Count - 1] = value.Value;
+                        outputs.Add(item);
+                    }
+                    else
+                    {
+                        time.Values[OutputRow.Headers.Count - 1] = value.Value;
+                    }
+                }
+            }
+            return outputs.OrderBy(x => x.Timestamp).ToList();
+        }
+
+        /// <summary>
         /// Writes results to file.
         /// </summary>
         /// <param name="path"></param>
         /// <param name="outputRows"></param>
         private void WriteResultsToFile(string path, List<OutputRow> outputRows)
         {
-            File.WriteAllText(@".\output.txt", $"Time\t{ string.Join("\t", OutputRow.Headers)}{Environment.NewLine}{string.Join(Environment.NewLine, outputRows.Select(outputRow => outputRow.AsTextLine()))}");
+            File.WriteAllText(path, $"Time\t{ string.Join("\t", OutputRow.Headers)}{Environment.NewLine}{string.Join(Environment.NewLine, outputRows.Select(outputRow => outputRow.AsTextLine()))}");
         }
     }
 }
