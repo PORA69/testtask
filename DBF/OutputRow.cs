@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DbfTests
 {
-    internal class OutputRow
+    internal class OutputRow : IComparable
     {
         internal DateTime Timestamp { get; set; }
         internal List<double?> Values { get; set; } = new List<double?>();
@@ -18,6 +18,15 @@ namespace DbfTests
         internal string AsTextLine()
         {
             return $"{Timestamp}\t{string.Join("\t", Values)}";
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj == null || !(obj is OutputRow))
+            {
+                return 1;
+            }
+            return Timestamp.CompareTo(((OutputRow)obj).Timestamp);
         }
     }
 }

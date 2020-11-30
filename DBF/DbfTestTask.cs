@@ -123,20 +123,20 @@ namespace DbfTests
                 var values = new DbfReader().ReadValues(file);
                 foreach (var value in values)
                 {
-                    var time = outputs.FirstOrDefault(x => x.Timestamp == value.Timestamp);
-                    if (time == null)
+                    var item = new OutputRow
                     {
-                        var item = new OutputRow
-                        {
-                            Timestamp = value.Timestamp,
-                            Values = new List<double?>(new double?[files.Count])
-                        };
+                        Timestamp = value.Timestamp,
+                        Values = new List<double?>(new double?[files.Count])
+                    };
+                    var index = outputs.BinarySearch(item);
+                    if (index < 0)
+                    {
                         item.Values[OutputRow.Headers.Count - 1] = value.Value;
-                        outputs.Add(item);
+                        outputs.Insert(~index, item);
                     }
                     else
                     {
-                        time.Values[OutputRow.Headers.Count - 1] = value.Value;
+                        outputs[index].Values[OutputRow.Headers.Count - 1] = value.Value;
                     }
                 }
             }

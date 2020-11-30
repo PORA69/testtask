@@ -7,8 +7,8 @@
     <ProjectGuid>{CE94CFB9-A247-4C7F-AAEF-78FAB1ED4CF3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DBF</RootNamespace>
-    <AssemblyName>DBF</AssemblyName>
+    <RootNamespace>DbfTests</RootNamespace>
+    <AssemblyName>DbfTests</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
