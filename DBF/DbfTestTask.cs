@@ -57,7 +57,32 @@ namespace DbfTests
             const string RootDir = @".\Data";
             const string RelevantFileName = "128.dbf";
 
-            var outputs = GetOrderedFileData(GetFiles(RootDir, RelevantFileName));
+            var outputs = GetOrderedFileDataBinarySearch(GetFiles(RootDir, RelevantFileName));
+
+            // the following asserts should pass
+            Assert.AreEqual(25790, outputs.Count);
+            Assert.AreEqual(27, OutputRow.Headers.Count);
+            Assert.AreEqual(27, outputs[0].Values.Count);
+            Assert.AreEqual(27, outputs[11110].Values.Count);
+            Assert.AreEqual(27, outputs[25789].Values.Count);
+            Assert.AreEqual(633036852000000000, outputs.Min(o => o.Timestamp).Ticks);
+            Assert.AreEqual(634756887000000000, outputs.Max(o => o.Timestamp).Ticks);
+            Assert.AreEqual(633036852000000000, outputs[0].Timestamp.Ticks);
+            Assert.AreEqual(634756887000000000, outputs.Last().Timestamp.Ticks);
+
+            WriteResultsToFile(@".\output_second_test.txt", outputs);
+        }
+
+        [TestMethod]
+        public void ThirdTestTask()
+        {
+            // Clear the header list set by the previous test
+            OutputRow.Headers.Clear();
+
+            const string RootDir = @".\Data";
+            const string RelevantFileName = "128.dbf";
+
+            var outputs = GetOrderedFileDataDictionary(GetFiles(RootDir, RelevantFileName));
 
             // the following asserts should pass
             Assert.AreEqual(25790, outputs.Count);
@@ -110,11 +135,11 @@ namespace DbfTests
         }
 
         /// <summary>
-        /// Gets data from files and maintains order of values in files;
+        /// Gets data from files and maintains order of values in files using BinarySearch.
         /// </summary>
         /// <param name="files"></param>
         /// <returns></returns>
-        private List<OutputRow> GetOrderedFileData(List<string> files)
+        private List<OutputRow> GetOrderedFileDataBinarySearch(List<string> files)
         {
             List<OutputRow> outputs = new List<OutputRow>();
             foreach (var file in files)
@@ -141,6 +166,44 @@ namespace DbfTests
                 }
             }
             return outputs.OrderBy(x => x.Timestamp).ToList();
+        }
+
+        /// <summary>
+        /// Gets data from files and maintains order of values in files using a Dictionary.
+        /// </summary>
+        /// <param name="files"></param>
+        /// <returns></returns>
+        private List<OutputRow> GetOrderedFileDataDictionary(List<string> files)
+        {
+            Dictionary<DateTime, List<double?>> keyValues = new Dictionary<DateTime, List<double?>>();
+            foreach (var file in files)
+            {
+                OutputRow.Headers.Add(file);
+                var values = new DbfReader().ReadValues(file);
+                foreach (var value in values)
+                {
+                    var item = new OutputRow
+                    {
+                        Timestamp = value.Timestamp,
+                        Values = new List<double?>(new double?[files.Count])
+                    };
+
+                    if (keyValues.ContainsKey(item.Timestamp))
+                    {
+                        keyValues[item.Timestamp][OutputRow.Headers.Count - 1] = value.Value;
+                    }
+                    else
+                    {
+                        item.Values[OutputRow.Headers.Count - 1] = value.Value;
+                        keyValues.Add(value.Timestamp, item.Values);
+                    }
+                }
+            }
+            return keyValues.GroupBy(x => x.Key).OrderBy(x => x.Key).Select(x => new OutputRow
+            {
+                Timestamp = x.Key,
+                Values = x.SelectMany(y => y.Value).ToList(),
+            }).ToList();
         }
 
         /// <summary>
